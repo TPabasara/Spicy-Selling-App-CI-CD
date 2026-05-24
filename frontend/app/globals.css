@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+/* Theme Configuration - Tailwind v4 uses CSS-based theme */
+@theme {
+  --color-primary-50: #fdf8f0;
+  --color-primary-100: #f9eddb;
+  --color-primary-200: #f2d7b4;
+  --color-primary-300: #e9bb84;
+  --color-primary-400: #de9752;
+  --color-primary-500: #d47d31;
+  --color-primary-600: #c46626;
+  --color-primary-700: #a34e22;
+  --color-primary-800: #833f21;
+  --color-primary-900: #6b351d;
+
+  --color-spice-vanilla: #f3e5ab;
+  --color-spice-nutmeg: #8b4513;
+  --color-spice-cardamom: #4a7c59;
+  --color-spice-tea: #2f4f4f;
+  --color-spice-cinnamon: #d2691e;
+}
+
+/* Custom Utility Classes - Tailwind v4 syntax */
+@utility container-custom {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+
+  @media (width >= 640px) {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+
+  @media (width >= 1024px) {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@utility btn-primary {
+  background-color: var(--color-primary-600);
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: var(--color-primary-700);
+  }
+
+  &:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary-500);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-outline {
+  border: 2px solid var(--color-primary-600);
+  color: var(--color-primary-600);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: color-mix(
+      in srgb,
+      var(--color-primary-50) 50%,
+      transparent
+    );
+  }
+}
+
+@utility input-field {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: 1px solid #d6d3d1;
+  border-radius: 0.5rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 1px var(--color-primary-500);
+  }
+
+  &::placeholder {
+    color: #a8a29e;
+  }
+
+  &:disabled {
+    background-color: #fafaf9;
+    color: #78716c;
+  }
+}
