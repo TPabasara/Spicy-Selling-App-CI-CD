@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: spice-shop
+  labels:
+    app: backend
+    tier: api
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "8000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+    tier: api
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000
+      protocol: TCP
+  # publishNotReadyAddresses left false so Service won't route to not-ready pods
+  publishNotReadyAddresses: false

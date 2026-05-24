@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: spice-shop
+  labels:
+    app: backend
+    tier: api
+spec:
+  replicas: 3
+  strategy:
+    # when release a new version, Kubernetes doesn't take down the old version all at once.
+    type: RollingUpdate
+    # When a new version is pushed, Kubernetes will spin up 1 new pod (maxSurge) before terminating any old ones (maxUnavailable: 0).
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: backend
+      tier: api
+  template:
+    metadata:
+      labels:
+        app: backend
+        tier: api
+    spec:
+      # restricts what this backend is allowed to do within the Kubernetes cluster itself.
+      serviceAccountName: spice-shop-sa
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: backend
+          image: ghcr.io/spice-shop/backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: spice-shop-config
+            - secretRef:
+                name: spice-shop-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            # If a memory leak happens and pod tries to use more than 512MB of RAM, Kubernetes will ruthlessly kill it to protect the rest of the cluster.
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          securityContext:
+            allowPrivilegeEscalation: false
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8000
+            failureThreshold: 12
+            periodSeconds: 10
+            timeoutSeconds: 5
+          # continually pings your app every 20 seconds. If the application deadlocks or gets stuck in an infinite loop and fails to respond 3 times in a row, Kubernetes kills the pod and spins up a fresh one.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # Determines if your pod is allowed to receive live traffic. If the pod is not ready, k8s won't kill the pod, but it will pull it out of the load balancer rotation until it recovers.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+          # Kubernetes will wait 10 seconds before killing the pod. This gives the time for the load balancer to stop sending new traffic to the pod before the application actually shuts down.
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 10"]
+      affinity:
+        # This ensures that all replicas are placed on different nodes. ensure even if entire server rack goes down, your backend stays online.
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - backend
+                topologyKey: kubernetes.io/hostname
+      terminationGracePeriodSeconds: 60

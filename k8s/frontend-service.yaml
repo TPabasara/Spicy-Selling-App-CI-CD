@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: spice-shop
+  labels:
+    app: frontend
+    tier: web
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+    tier: web
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+  # This Service is internal-only for the frontend pods; external exposure should happen via Ingress
+  # The Role of Ingress: An Ingress controller (like NGINX or Traefik) sits at the very edge of Kubernetes cluster.
+  #                      It acts as the "smart bouncer." When a user types www.spice-shop.com into their browser, the Ingress receives the request, inspects the URL path, and then securely forwards that traffic inward to this internal frontend-service.
