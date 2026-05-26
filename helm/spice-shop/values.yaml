@@ -1,0 +1,151 @@
+# Default values for the SpiceShop Helm chart.
+# This file is a safe staging-like baseline; use values-staging.yaml or values-prod.yaml for environment-specific overrides.
+environment: staging
+
+replicaCount:
+  backend: 3
+  frontend: 2
+
+image:
+  backend:
+    repository: ghcr.io/spice-shop/backend
+    tag: "staging"
+    pullPolicy: Always
+  frontend:
+    repository: ghcr.io/spice-shop/frontend
+    tag: "staging"
+    pullPolicy: Always
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: spice-shop-sa
+  automountServiceAccountToken: false
+
+podSecurityContext:
+  fsGroup: 1000
+
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+service:
+  backend:
+    type: ClusterIP
+    port: 8000
+  frontend:
+    type: ClusterIP
+    port: 3000
+
+ingress:
+  enabled: true
+  className: alb
+  annotations: {}
+  hosts:
+    - host: api.spiceshop.lk
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+    - host: spiceshop.lk
+      paths:
+        - path: /
+          pathType: Prefix
+          service: frontend
+
+resources:
+  backend:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+
+autoscaling:
+  backend:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  frontend:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 70
+
+livenessProbe:
+  backend:
+    httpGet:
+      path: /api/v1/
+      port: 8000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+  frontend:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+
+readinessProbe:
+  backend:
+    httpGet:
+      path: /api/v1/
+      port: 8000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+  frontend:
+    httpGet:
+      path: /
+      port: 3000
+    initialDelaySeconds: 10
+    periodSeconds: 5
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+pdb:
+  backend:
+    enabled: true
+    minAvailable: 2
+  frontend:
+    enabled: true
+    minAvailable: 1
+
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+  prometheus:
+    scrape: true
+
+config:
+  APP_NAME: "SpiceShop API"
+  DEBUG: "false"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  LOG_LEVEL: "info"
+  CORS_ORIGINS: "https://spiceshop.lk"
+  NEXT_PUBLIC_API_URL: "https://api.spiceshop.lk/api/v1"
+  NEXT_PUBLIC_BASE_URL: "https://spiceshop.lk"
+
+secrets:
+  DATABASE_URL: ""
+  SECRET_KEY: ""
+  JWT_SECRET: ""

@@ -1,0 +1,55 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: spice-shop-restrictive
+  namespace: spice-shop
+  labels:
+    app: spice-shop
+    component: network-policy
+  annotations:
+    note: "This policy implements a conservative default. Review namespace labels for ingress controller and kube-system before enabling."
+spec:
+  # Apply to all pods in the namespace
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+  # Ingress: allow only traffic from the ingress controller and from frontend pods (frontend -> backend)
+  ingress:
+    - from:
+        # Allow traffic from the ingress controller namespace (ensure that namespace is labeled accordingly)
+        - namespaceSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+        # Allow traffic from frontend pods in this namespace
+        - podSelector:
+            matchLabels:
+              app: frontend
+      ports:
+        - protocol: TCP
+          port: 8000
+        - protocol: TCP
+          port: 3000
+  # Egress: allow DNS lookups and HTTPS outbound (for pulling images or external APIs)
+  egress:
+    - to:
+        # Cluster DNS (usually in kube-system) - ensure kube-dns pods have an appropriate label if needed
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        # Allow outbound HTTPS to any IP (common requirement for registries/third-party APIs)
+        - ipBlock:
+            cidr: 0.0.0.0/0
+      ports:
+        - protocol: TCP
+          port: 443
+  # If you need additional egress (e.g., registry on port 5000 or other services), add rules here.

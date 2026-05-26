@@ -1,0 +1,28 @@
+## ConfigMap: non-sensitive runtime configuration for SpiceShop
+# WARNING: Do NOT store secrets (DB credentials, API keys) in ConfigMaps. Use Kubernetes Secrets.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: spice-shop-config
+  namespace: spice-shop
+  labels:
+    app: backend
+    component: config
+# immutable: true provides two critical benefits:
+# 1. Performance: Stops Kubelet from continuously polling the K8s API server.
+# 2. Predictability: Prevents silent updates, forcing all config changes through the CI/CD pipeline.
+immutable: true
+data:
+  APP_NAME: "SpiceShop API"
+  DEBUG: "false"
+  ALGORITHM: "HS256"
+  ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+  CORS_ORIGINS: "https://spiceshop.lk,https://www.spiceshop.lk"
+  NEXT_PUBLIC_API_URL: "https://api.spiceshop.lk/api/v1"
+  NEXT_PUBLIC_BASE_URL: "https://spiceshop.lk"
+  LOG_LEVEL: "info"
+  # DELIVERY_ZONES kept as JSON string for application parsing; formatted for readability
+  DELIVERY_ZONES: |
+    {"colombo": {"fee": 300, "name": "Colombo"},
+     "suburbs": {"fee": 500, "name": "Suburbs"},
+     "outstation": {"fee": 800, "name": "Outstation"}}

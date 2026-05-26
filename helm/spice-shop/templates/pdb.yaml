@@ -1,0 +1,35 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-pdb
+  namespace: spice-shop
+  labels:
+    app: backend
+    component: pdb
+  annotations:
+    note: "Protects backend availability during voluntary disruptions (drains/maintenance)."
+spec:
+  # For a deployment with 3 replicas, keeping minAvailable: 2 allows one pod to be evicted.
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: backend
+      tier: api
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  namespace: spice-shop
+  labels:
+    app: frontend
+    component: pdb
+  annotations:
+    note: "Protects frontend availability during voluntary disruptions."
+spec:
+  # For a deployment with 2 replicas, minAvailable: 1 ensures at least one pod remains available.
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: frontend
+      tier: web
